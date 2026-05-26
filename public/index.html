@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stitch & Smile Studio 🧵</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  :root {
+    --pink:#FF6B9D; --pink-light:#FFB3CF; --yellow:#FFD93D;
+    --teal:#00C9A7; --teal-light:#A8F0E8; --purple:#C77DFF;
+    --purple-light:#E8D5FF; --orange:#FF8C42; --blue:#4CC9F0;
+    --bg:#FFF8FD; --card-bg:#FFFFFF; --text:#2D2D2D; --text-light:#666;
+    --border:#F0D6F5; --shadow:0 4px 20px rgba(199,125,255,.15);
+    --radius:18px; --radius-sm:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  h1,h2,h3,.logo{font-family:'Fredoka One',cursive}
+
+  /* NAV */
+  nav{background:linear-gradient(135deg,#FF6B9D 0%,#C77DFF 50%,#4CC9F0 100%);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:70px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+  .logo{color:white;font-size:1.6rem;cursor:pointer;text-shadow:2px 2px 4px rgba(0,0,0,.2)}
+  .nav-links{display:flex;gap:.5rem;align-items:center}
+  .nav-btn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);color:white;padding:.4rem 1rem;border-radius:50px;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;font-size:.85rem;transition:all .2s;white-space:nowrap}
+  .nav-btn:hover{background:rgba(255,255,255,.35);transform:translateY(-1px)}
+  .nav-btn.cart-btn{background:var(--yellow);color:#333;border-color:var(--yellow)}
+  .cart-count{background:#FF4444;color:white;border-radius:50%;width:20px;height:20px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-left:4px}
+
+  /* PAGES */
+  .page{display:none} .page.active{display:block}
+
+  /* HERO */
+  .hero{background:linear-gradient(135deg,#FFE4F3 0%,#E8D5FF 40%,#D5F5F6 100%);padding:4rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:'🧵✂️🌸🦋🌈⭐🎀🦄';position:absolute;top:10px;left:0;right:0;font-size:1.5rem;letter-spacing:2rem;opacity:.3;white-space:nowrap}
+  .hero h1{font-size:3rem;color:var(--pink);margin-bottom:.5rem;text-shadow:3px 3px 0 #FFB3CF}
+  .hero p{font-size:1.1rem;color:var(--text-light);max-width:500px;margin:0 auto 2rem}
+  .hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+
+  /* BUTTONS */
+  .btn{padding:.75rem 2rem;border-radius:50px;border:none;font-family:'Poppins',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:all .2s}
+  .btn-primary{background:var(--pink);color:white;box-shadow:0 4px 15px rgba(255,107,157,.4)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,157,.5)}
+  .btn-secondary{background:var(--yellow);color:#333;box-shadow:0 4px 15px rgba(255,217,61,.4)}
+  .btn-secondary:hover{transform:translateY(-2px)}
+  .btn-teal{background:var(--teal);color:white;box-shadow:0 4px 15px rgba(0,201,167,.4)}
+  .btn-teal:hover{transform:translateY(-2px)}
+  .btn-outline{background:transparent;border:2px solid var(--pink);color:var(--pink)}
+  .btn-outline:hover{background:var(--pink);color:white}
+  .btn-sm{padding:.4rem 1.2rem;font-size:.85rem}
+  .btn-full{width:100%}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+  /* SECTIONS */
+  .section{padding:3rem 2rem;max-width:1200px;margin:0 auto}
+  .section-title{font-size:2rem;color:var(--purple);margin-bottom:.3rem}
+  .section-sub{color:var(--text-light);margin-bottom:2rem}
+
+  /* CATEGORIES */
+  .categories-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem}
+  .cat-card{background:var(--card-bg);border-radius:var(--radius);padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;border:3px solid transparent;box-shadow:var(--shadow)}
+  .cat-card:hover{transform:translateY(-4px);border-color:var(--pink-light)}
+  .cat-icon{font-size:2.5rem;margin-bottom:.5rem;display:block}
+  .cat-name{font-weight:700;font-size:.95rem}
+  .cat-count{font-size:.8rem;color:var(--text-light)}
+
+  /* PRODUCT CARDS */
+  .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.5rem}
+  .product-card{background:var(--card-bg);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;border:2px solid transparent}
+  .product-card:hover{transform:translateY(-4px);border-color:var(--pink-light)}
+  .product-img{width:100%;height:180px;display:flex;align-items:center;justify-content:center;font-size:5rem;background:linear-gradient(135deg,#FFE4F3,#E8D5FF)}
+  .product-info{padding:1rem}
+  .product-name{font-weight:700;margin-bottom:.25rem;font-size:.95rem}
+  .product-cat{font-size:.75rem;color:var(--text-light);margin-bottom:.5rem}
+  .product-price{font-weight:700;color:var(--pink);font-size:1.1rem}
+  .product-formats{font-size:.7rem;color:var(--text-light);margin-top:.2rem}
+  .product-actions{display:flex;gap:.5rem;margin-top:.75rem}
+
+  /* BADGES */
+  .badge{display:inline-block;padding:.2rem .7rem;border-radius:50px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .badge-pink{background:#FFE4F3;color:var(--pink)}
+  .badge-teal{background:var(--teal-light);color:#007A65}
+  .badge-yellow{background:#FFF5CC;color:#997A00}
+  .badge-purple{background:var(--purple-light);color:#6B00CC}
+
+  /* INFO BANNER */
+  .info-banner{background:linear-gradient(135deg,var(--teal) 0%,var(--blue) 100%);padding:2rem;border-radius:var(--radius);display:flex;gap:2rem;flex-wrap:wrap;align-items:center;margin:2rem 0}
+  .info-banner-item{text-align:center;color:white;flex:1;min-width:120px}
+  .info-banner-item .icon{font-size:2rem;display:block;margin-bottom:.3rem}
+  .info-banner-item strong{display:block;font-size:.9rem}
+  .info-banner-item span{font-size:.75rem;opacity:.85}
+
+  /* BROWSE */
+  .browse-layout{display:flex;gap:2rem;align-items:flex-start;max-width:1200px;margin:2rem auto;padding:0 2rem}
+  .sidebar{width:220px;flex-shrink:0;background:var(--card-bg);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow);position:sticky;top:80px}
+  .sidebar h3{color:var(--purple);margin-bottom:1rem;font-size:1.2rem}
+  .sidebar-cat{display:flex;align-items:center;gap:.5rem;padding:.5rem .7rem;border-radius:var(--radius-sm);cursor:pointer;font-size:.9rem;transition:all .15s;color:var(--text);font-weight:500}
+  .sidebar-cat:hover,.sidebar-cat.active{background:#FFE4F3;color:var(--pink)}
+  .browse-main{flex:1}
+  .browse-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+  .search-bar{display:flex;gap:.5rem;align-items:center;background:var(--card-bg);border:2px solid var(--border);border-radius:50px;padding:.4rem 1rem;flex:1;max-width:350px}
+  .search-bar input{border:none;outline:none;font-family:'Poppins',sans-serif;font-size:.9rem;background:transparent;flex:1}
+  .sort-select{border:2px solid var(--border);border-radius:50px;padding:.4rem 1rem;font-family:'Poppins',sans-serif;background:var(--card-bg);cursor:pointer;font-size:.85rem}
+
+  /* PRODUCT DETAIL */
+  .product-detail{max-width:900px;margin:2rem auto;padding:0 2rem}
+  .product-detail-layout{display:flex;gap:3rem;flex-wrap:wrap}
+  .product-detail-img{width:350px;height:350px;flex-shrink:0;background:linear-gradient(135deg,#FFE4F3,#E8D5FF);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:10rem;box-shadow:var(--shadow)}
+  .product-detail-info{flex:1;min-width:250px}
+  .product-detail-info h1{font-size:1.8rem;color:var(--purple);margin-bottom:.3rem}
+  .product-detail-price{font-size:2rem;font-weight:700;color:var(--pink);margin:1rem 0}
+  .formats-list{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0}
+  .delivery-option{border:2px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:.75rem;cursor:pointer;transition:all .2s;display:flex;align-items:flex-start;gap:.75rem}
+  .delivery-option:hover,.delivery-option.selected{border-color:var(--pink);background:#FFF8FD}
+  .delivery-option input[type="radio"]{margin-top:3px;accent-color:var(--pink)}
+  .delivery-option strong{display:block;font-size:.95rem}
+  .delivery-option span{font-size:.8rem;color:var(--text-light)}
+
+  /* CART */
+  .cart-page{max-width:800px;margin:2rem auto;padding:0 2rem}
+  .cart-item{background:var(--card-bg);border-radius:var(--radius);padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem;margin-bottom:1rem;box-shadow:var(--shadow);flex-wrap:wrap}
+  .cart-item-icon{font-size:2.5rem;width:60px;text-align:center}
+  .cart-item-details{flex:1;min-width:150px}
+  .cart-item-name{font-weight:700}
+  .cart-item-type{font-size:.8rem;color:var(--text-light)}
+  .cart-item-price{font-weight:700;color:var(--pink);font-size:1.1rem}
+  .cart-remove{background:#FFE4E4;border:none;color:#cc0000;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+  .cart-summary{background:var(--card-bg);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow)}
+  .cart-total-row{display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.95rem}
+  .cart-total-row.big{font-size:1.2rem;font-weight:700;color:var(--purple);border-top:2px solid var(--border);padding-top:.5rem;margin-top:.5rem}
+
+  /* CHECKOUT */
+  .checkout-page{max-width:700px;margin:2rem auto;padding:0 2rem}
+  .checkout-section{background:var(--card-bg);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+  .checkout-section h3{color:var(--purple);margin-bottom:1rem;font-size:1.3rem}
+  #stripe-card-element{border:2px solid var(--border);border-radius:var(--radius-sm);padding:.75rem 1rem;background:white;font-size:16px}
+  #stripe-card-element.StripeElement--focus{border-color:var(--purple)}
+  #card-errors{color:#cc0000;font-size:.85rem;margin-top:.5rem}
+
+  /* AUTH */
+  .auth-page{min-height:calc(100vh - 70px);display:flex;align-items:center;justify-content:center;padding:2rem;background:linear-gradient(135deg,#FFE4F3 0%,#E8D5FF 50%,#D5F5F6 100%)}
+  .auth-card{background:var(--card-bg);border-radius:var(--radius);padding:2.5rem;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(199,125,255,.25)}
+  .auth-card h2{font-size:2rem;color:var(--pink);margin-bottom:.3rem}
+  .auth-card p{color:var(--text-light);margin-bottom:1.5rem;font-size:.9rem}
+
+  /* FORMS */
+  .form-group{margin-bottom:1.1rem}
+  .form-group label{display:block;font-weight:600;font-size:.85rem;margin-bottom:.4rem}
+  .form-group input,.form-group select,.form-group textarea{width:100%;border:2px solid var(--border);border-radius:var(--radius-sm);padding:.65rem 1rem;font-family:'Poppins',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;background:var(--bg)}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--purple);background:white}
+  .form-group textarea{min-height:80px;resize:vertical}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .form-hint{font-size:.75rem;color:var(--text-light);margin-top:.3rem}
+  .form-error{font-size:.8rem;color:#cc0000;margin-bottom:.75rem;padding:.5rem;background:#FFF0F0;border-radius:var(--radius-sm)}
+  .password-req{background:#F9F9F9;border-radius:var(--radius-sm);padding:.75rem;margin-top:.5rem}
+  .password-req p{font-size:.75rem;color:var(--text-light);font-weight:600;margin-bottom:.4rem}
+  .req-item{font-size:.75rem;display:flex;gap:.4rem;align-items:center;margin-bottom:.2rem}
+  .req-item.met{color:var(--teal)} .req-item.unmet{color:#aaa}
+
+  /* DASHBOARD */
+  .dashboard{max-width:900px;margin:2rem auto;padding:0 2rem}
+  .dashboard-header{background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:var(--radius);padding:2rem;color:white;margin-bottom:2rem}
+  .dashboard-header h2{font-size:2rem;margin-bottom:.3rem}
+  .dashboard-tabs{display:flex;gap:.5rem;margin-bottom:2rem;flex-wrap:wrap}
+  .tab-btn{padding:.5rem 1.25rem;border-radius:50px;border:2px solid var(--border);background:var(--card-bg);cursor:pointer;font-family:'Poppins',sans-serif;font-weight:600;font-size:.85rem;transition:all .2s;color:var(--text)}
+  .tab-btn.active{background:var(--purple);border-color:var(--purple);color:white}
+  .order-card{background:var(--card-bg);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow);display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  .order-icon{font-size:2rem}
+  .order-info{flex:1;min-width:150px}
+  .order-name{font-weight:700}
+  .order-date{font-size:.8rem;color:var(--text-light)}
+  .download-btn{background:var(--teal);color:white;border:none;border-radius:50px;padding:.4rem 1rem;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;text-decoration:none;display:inline-block}
+
+  /* ADMIN */
+  .admin-page{max-width:1000px;margin:2rem auto;padding:0 2rem}
+  .admin-header{background:linear-gradient(135deg,#2D2D2D,#444);border-radius:var(--radius);padding:1.5rem 2rem;color:white;margin-bottom:2rem;display:flex;align-items:center;gap:1rem}
+  .admin-header h2{font-size:1.8rem}
+  .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+  .admin-card{background:var(--card-bg);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow)}
+  .admin-card h3{color:var(--purple);margin-bottom:1rem;font-size:1.2rem}
+  .admin-list{list-style:none}
+  .admin-list li{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+  .admin-list li:last-child{border-bottom:none}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:1rem;padding:.2rem .4rem;border-radius:4px}
+  .icon-btn:hover{background:#F5F5F5}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:2rem;right:2rem;background:#2D2D2D;color:white;padding:.75rem 1.5rem;border-radius:var(--radius-sm);box-shadow:0 4px 20px rgba(0,0,0,.3);font-size:.9rem;z-index:999;transform:translateY(100px);opacity:0;transition:all .3s;max-width:300px}
+  .toast.show{transform:translateY(0);opacity:1}
+  .toast.success{background:var(--teal)} .toast.error{background:#E74C3C}
+
+  /* SPINNER */
+  .spinner{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MISC */
+  .page-header{background:linear-gradient(135deg,#FFE4F3,#E8D5FF);padding:2rem;text-align:center}
+  .page-header h1{font-size:2.2rem;color:var(--purple)}
+  .empty-state{text-align:center;padding:4rem 2rem;color:var(--text-light)}
+  .empty-state .icon{font-size:4rem;margin-bottom:1rem;display:block}
+  .empty-state h3{color:var(--purple);margin-bottom:.5rem}
+  .chip{display:inline-block;padding:.2rem .6rem;border-radius:50px;font-size:.7rem;font-weight:600;background:var(--purple-light);color:#6B00CC;margin-right:.3rem}
+  .divider{height:2px;background:linear-gradient(to right,var(--pink-light),var(--purple-light),var(--teal-light));border-radius:1px;margin:.5rem 0}
+  .text-center{text-align:center}
+
+  /* FOOTER */
+  footer{background:#2D2D2D;color:white;padding:3rem 2rem 1.5rem;margin-top:4rem}
+  .footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;max-width:1200px;margin:0 auto 2rem}
+  .footer-col h4{font-family:'Fredoka One',cursive;color:var(--pink-light);margin-bottom:1rem;font-size:1.1rem}
+  .footer-col a{display:block;color:#ccc;text-decoration:none;margin-bottom:.4rem;font-size:.85rem;cursor:pointer}
+  .footer-col a:hover{color:white}
+  .footer-bottom{text-align:center;color:#888;font-size:.8rem;border-top:1px solid #444;padding-top:1.5rem;max-width:1200px;margin:0 auto}
+
+  @media(max-width:600px){
+    .hero h1{font-size:2rem}
+    .browse-layout{flex-direction:column}
+    .sidebar{width:100%;position:static}
+    .admin-grid{grid-template-columns:1fr}
+    .form-row{grid-template-columns:1fr}
+    .product-detail-img{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo" onclick="showPage('home')">🧵 Stitch &amp; Smile <span style="font-size:1.3rem">Studio</span></div>
+  <div class="nav-links">
+    <button class="nav-btn" onclick="showPage('browse')">🛍️ Shop</button>
+    <button class="nav-btn" id="nav-account-btn" onclick="handleAccountNav()">👤 Account</button>
+    <button class="nav-btn" id="nav-admin-btn" onclick="showPage('admin')" style="display:none">⚙️ Admin</button>
+    <button class="nav-btn cart-btn" onclick="showPage('cart')">🛒 Cart <span class="cart-count" id="cart-count">0</span></button>
+  </div>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h1>🎀 Stitch &amp; Smile Studio!</h1>
+    <p>Adorable machine embroidery designs &amp; vector art — downloaded instantly or shipped on a drive!</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary" onclick="showPage('browse')">✨ Browse Designs</button>
+      <button class="btn btn-secondary" onclick="showPage('register')">🌟 Join Free</button>
+    </div>
+  </div>
+  <div class="section">
+    <div class="info-banner">
+      <div class="info-banner-item"><span class="icon">⚡</span><strong>Instant Download</strong><span>ZIP files emailed right away!</span></div>
+      <div class="info-banner-item"><span class="icon">💾</span><strong>USB Drive Option</strong><span>We mail it with a printed preview!</span></div>
+      <div class="info-banner-item"><span class="icon">🎨</span><strong>Many Formats</strong><span>PES, DST, EXP, JEF &amp; more</span></div>
+      <div class="info-banner-item"><span class="icon">💖</span><strong>New Designs Weekly</strong><span>Fresh collections all the time!</span></div>
+    </div>
+    <h2 class="section-title">🌈 Browse by Category</h2>
+    <p class="section-sub">Find exactly what you're looking for!</p>
+    <div class="categories-grid" id="home-cats"><div class="text-center" style="grid-column:1/-1;padding:2rem;color:var(--text-light)">Loading categories...</div></div>
+    <br>
+    <h2 class="section-title">⭐ Featured Designs</h2>
+    <p class="section-sub">Our customers' favorites!</p>
+    <div class="products-grid" id="home-featured"><div class="text-center" style="grid-column:1/-1;padding:2rem;color:var(--text-light)">Loading designs...</div></div>
+  </div>
+</div>
+
+<!-- BROWSE PAGE -->
+<div class="page" id="page-browse">
+  <div class="page-header">
+    <h1>🛍️ Shop All Designs</h1>
+    <p style="color:var(--text-light);margin-top:.3rem">Browse hundreds of embroidery designs &amp; vector art</p>
+  </div>
+  <div class="browse-layout">
+    <div class="sidebar">
+      <h3>Categories</h3>
+      <div id="sidebar-cats"></div>
+    </div>
+    <div class="browse-main">
+      <div class="browse-header">
+        <div class="search-bar">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search designs..." oninput="filterProducts()">
+        </div>
+        <select class="sort-select" id="sort-select" onchange="filterProducts()">
+          <option value="featured">⭐ Featured</option>
+          <option value="price-low">💰 Price: Low to High</option>
+          <option value="price-high">💰 Price: High to Low</option>
+          <option value="name">🔤 A–Z</option>
+        </select>
+      </div>
+      <div id="browse-current-cat" style="margin-bottom:1rem;font-weight:600;color:var(--purple);font-size:1.1rem;font-family:'Fredoka One',cursive"></div>
+      <div class="products-grid" id="browse-products"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT DETAIL PAGE -->
+<div class="page" id="page-product">
+  <div class="section" style="padding-top:1rem">
+    <button class="btn btn-outline btn-sm" onclick="showPage('browse')" style="margin-bottom:1rem">← Back to Shop</button>
+    <div class="product-detail-layout" id="product-detail-content"></div>
+  </div>
+</div>
+
+<!-- CART PAGE -->
+<div class="page" id="page-cart">
+  <div class="page-header"><h1>🛒 Your Cart</h1></div>
+  <div class="cart-page">
+    <div id="cart-items"></div>
+    <div id="cart-summary-section"></div>
+  </div>
+</div>
+
+<!-- CHECKOUT PAGE -->
+<div class="page" id="page-checkout">
+  <div class="page-header"><h1>💳 Checkout</h1></div>
+  <div class="checkout-page">
+    <div class="checkout-section">
+      <h3>📦 Order Summary</h3>
+      <div id="checkout-order-summary"></div>
+    </div>
+    <div class="checkout-section" id="checkout-shipping-section" style="display:none">
+      <h3>📮 Shipping Address</h3>
+      <div class="form-row">
+        <div class="form-group"><label>First Name</label><input type="text" id="ship-first" placeholder="Jane"></div>
+        <div class="form-group"><label>Last Name</label><input type="text" id="ship-last" placeholder="Smith"></div>
+      </div>
+      <div class="form-group"><label>Address</label><input type="text" id="ship-addr" placeholder="123 Craft Lane"></div>
+      <div class="form-row">
+        <div class="form-group"><label>City</label><input type="text" id="ship-city" placeholder="Stitchville"></div>
+        <div class="form-group"><label>State</label><input type="text" id="ship-state" placeholder="CA"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ZIP Code</label><input type="text" id="ship-zip" placeholder="90210"></div>
+        <div class="form-group"><label>Country</label><input type="text" id="ship-country" placeholder="USA" value="USA"></div>
+      </div>
+    </div>
+    <div class="checkout-section">
+      <h3>💳 Secure Payment</h3>
+      <div id="stripe-card-element"></div>
+      <div id="card-errors"></div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-top:.75rem;font-size:.75rem;color:var(--text-light)">
+        🔒 Secured by Stripe &nbsp;|&nbsp; <img src="https://js.stripe.com/v3/fingerprinted/img/visa-365725566f9578a9589553aa9296d178.svg" height="16" alt="Visa"> <img src="https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg" height="16" alt="MC"> <img src="https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg" height="16" alt="Amex">
+      </div>
+    </div>
+    <div id="checkout-error" class="form-error" style="display:none"></div>
+    <button class="btn btn-primary btn-full" id="pay-btn" style="font-size:1.1rem;padding:1rem" onclick="completePurchase()">🎉 Complete Purchase</button>
+    <p style="text-align:center;font-size:.75rem;color:var(--text-light);margin-top:1rem">🔒 Your payment info is encrypted and never stored on our servers</p>
+  </div>
+</div>
+
+<!-- ORDER CONFIRMATION -->
+<div class="page" id="page-confirmation">
+  <div class="section text-center" style="max-width:600px;margin:4rem auto">
+    <div style="font-size:5rem;margin-bottom:1rem">🎉</div>
+    <h1 style="font-family:'Fredoka One',cursive;color:var(--teal);font-size:2.5rem">Order Complete!</h1>
+    <p style="font-size:1.1rem;color:var(--text-light);margin:1rem 0">Your purchase was successful! We've sent a confirmation email — check your inbox (and spam folder just in case)!</p>
+    <div style="background:#F0FBF9;border-radius:var(--radius);padding:1.5rem;margin:1.5rem 0;border:2px solid var(--teal-light)">
+      <p style="font-weight:700;color:var(--teal)">📧 Confirmation sent to: <span id="confirm-email"></span></p>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="showPage('dashboard')">📦 View My Orders</button>
+      <button class="btn btn-secondary" onclick="showPage('browse')">🛍️ Keep Shopping</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN PAGE -->
+<div class="page" id="page-login">
+  <div class="auth-page">
+    <div class="auth-card">
+      <h2>👋 Welcome Back!</h2>
+      <p>Sign in to your Stitch &amp; Smile account</p>
+      <div class="form-group"><label>Email Address</label><input type="email" id="login-email" placeholder="you@email.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div id="login-error" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">🔑 Sign In</button>
+      <p style="text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--text-light)">Don't have an account? <a href="#" onclick="showPage('register')" style="color:var(--pink);font-weight:700">Create one free! 🎀</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER PAGE -->
+<div class="page" id="page-register">
+  <div class="auth-page">
+    <div class="auth-card" style="max-width:520px">
+      <h2>🌟 Join the Studio!</h2>
+      <p>Create your free account to start stitching!</p>
+      <div class="form-row">
+        <div class="form-group"><label>First Name *</label><input type="text" id="reg-firstname" placeholder="Jane"></div>
+        <div class="form-group"><label>Last Name *</label><input type="text" id="reg-lastname" placeholder="Smith"></div>
+      </div>
+      <div class="form-group"><label>Email Address *</label><input type="email" id="reg-email" placeholder="you@email.com"><div class="form-hint">You'll use this to log in and receive your downloads</div></div>
+      <div class="form-group"><label>Phone <span style="color:var(--text-light);font-weight:400">(optional)</span></label><input type="tel" id="reg-phone" placeholder="(555) 123-4567"></div>
+      <div class="form-group">
+        <label>Password *</label>
+        <input type="password" id="reg-password" placeholder="Create a strong password" oninput="checkPasswordReqs()">
+        <div class="password-req">
+          <p>Your password must have:</p>
+          <div class="req-item unmet" id="req-length">⬜ At least 8 characters</div>
+          <div class="req-item unmet" id="req-upper">⬜ One uppercase letter (A–Z)</div>
+          <div class="req-item unmet" id="req-lower">⬜ One lowercase letter (a–z)</div>
+          <div class="req-item unmet" id="req-number">⬜ One number (0–9)</div>
+          <div class="req-item unmet" id="req-special">⬜ One special character (!@#$%^&amp;*)</div>
+        </div>
+      </div>
+      <div class="form-group"><label>Confirm Password *</label><input type="password" id="reg-confirm" placeholder="Repeat your password"></div>
+      <div class="form-group"><label style="display:flex;align-items:flex-start;gap:.5rem;font-weight:400;cursor:pointer"><input type="checkbox" id="reg-newsletter" style="width:auto;margin-top:3px"><span style="font-size:.85rem">📬 Subscribe for new designs &amp; sales!</span></label></div>
+      <div id="reg-error" class="form-error" style="display:none"></div>
+      <button class="btn btn-primary btn-full" id="reg-btn" onclick="doRegister()">🎀 Create My Account</button>
+      <p style="text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--text-light)">Already have an account? <a href="#" onclick="showPage('login')" style="color:var(--pink);font-weight:700">Sign in →</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div class="page" id="page-dashboard">
+  <div class="dashboard">
+    <div class="dashboard-header">
+      <h2 id="dash-greeting">👋 Hello!</h2>
+      <p id="dash-email" style="opacity:.8;font-size:.9rem"></p>
+    </div>
+    <div class="dashboard-tabs">
+      <button class="tab-btn active" onclick="switchDashTab('orders',this)">📦 My Orders</button>
+      <button class="tab-btn" onclick="switchDashTab('profile',this)">👤 Profile</button>
+    </div>
+    <div id="dash-orders" class="dash-tab"><div id="orders-list"></div></div>
+    <div id="dash-profile" class="dash-tab" style="display:none">
+      <div style="background:var(--card-bg);border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow)">
+        <h3 style="color:var(--purple);margin-bottom:1rem">Update Your Info</h3>
+        <div class="form-row">
+          <div class="form-group"><label>First Name</label><input type="text" id="profile-first"></div>
+          <div class="form-group"><label>Last Name</label><input type="text" id="profile-last"></div>
+        </div>
+        <div class="form-group"><label>Email</label><input type="email" id="profile-email" disabled style="opacity:.6"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="profile-phone"></div>
+        <button class="btn btn-primary" onclick="saveProfile()">💾 Save Changes</button>
+        <button class="btn btn-outline" style="margin-left:1rem" onclick="doLogout()">🚪 Sign Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="page" id="page-admin">
+  <div class="admin-page">
+    <div class="admin-header">
+      <span style="font-size:2rem">⚙️</span>
+      <div><h2>Admin Panel</h2><p style="opacity:.7;font-size:.85rem">Manage your Stitch &amp; Smile Studio</p></div>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>📂 Manage Categories</h3>
+        <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap">
+          <input type="text" id="new-cat-name" placeholder="Category name" style="flex:1;border:2px solid var(--border);border-radius:var(--radius-sm);padding:.5rem .75rem;font-family:'Poppins',sans-serif;min-width:120px">
+          <input type="text" id="new-cat-icon" placeholder="Emoji" style="width:70px;border:2px solid var(--border);border-radius:var(--radius-sm);padding:.5rem .75rem;font-family:'Poppins',sans-serif;text-align:center">
+          <button class="btn btn-teal btn-sm" onclick="adminAddCategory()">+ Add</button>
+        </div>
+        <ul class="admin-list" id="admin-cat-list"></ul>
+      </div>
+      <div class="admin-card">
+        <h3>🧵 Add New Design</h3>
+        <div class="form-group"><label>Design Name</label><input type="text" id="ap-name" placeholder="Cute Bunny Set"></div>
+        <div class="form-group"><label>Category</label><select id="ap-cat"></select></div>
+        <div class="form-row">
+          <div class="form-group"><label>Price ($)</label><input type="number" id="ap-price" placeholder="3.99" step=".01" min="0"></div>
+          <div class="form-group"><label>Emoji Icon</label><input type="text" id="ap-icon" placeholder="🐰"></div>
+        </div>
+        <div class="form-group"><label>File Formats</label><input type="text" id="ap-formats" placeholder="PES, DST, EXP, JEF"></div>
+        <div class="form-group"><label>Hoop Size(s)</label><input type="text" id="ap-hoop" placeholder="4x4, 5x7"></div>
+        <div class="form-group"><label>Description</label><textarea id="ap-desc" placeholder="Describe this design..."></textarea></div>
+        <div class="form-row">
+          <div class="form-group"><label>Drive Shipping Cost ($)</label><input type="number" id="ap-ship" value="4.99" step=".01" min="0"></div>
+          <div class="form-group"><label>Type</label>
+            <select id="ap-type">
+              <option value="embroidery">🧵 Embroidery</option>
+              <option value="vector">🎨 Vector Art</option>
+              <option value="both">🧵🎨 Both</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Featured?</label>
+          <select id="ap-featured"><option value="false">No</option><option value="true">⭐ Yes — show on homepage</option></select>
+        </div>
+        <div class="form-group">
+          <label>Design File (ZIP, PES, DST, SVG, etc.)</label>
+          <input type="file" id="ap-file" accept=".zip,.pes,.dst,.exp,.jef,.vp3,.hus,.svs,.xxx,.pec,.sew,.csd,.svg,.png,.eps,.ai,.pdf" style="border:2px solid var(--border);border-radius:var(--radius-sm);padding:.5rem">
+          <div class="form-hint">Upload the actual design file customers will download. You can also add/replace it later.</div>
+        </div>
+        <button class="btn btn-primary btn-full" id="add-prod-btn" onclick="adminAddProduct()">✨ Add Design to Shop</button>
+      </div>
+      <div class="admin-card" style="grid-column:1/-1">
+        <h3>📋 All Designs (<span id="admin-prod-count">0</span>)</h3>
+        <ul class="admin-list" id="admin-prod-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>🧵 Stitch &amp; Smile Studio</h4>
+      <p style="color:#aaa;font-size:.85rem;line-height:1.6">Bringing joy one stitch at a time! Premium machine embroidery designs &amp; vector art you'll love.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Shop</h4>
+      <a onclick="showPage('browse')">All Designs</a>
+      <a onclick="showPage('browse','Animals & Pets')">Animals &amp; Pets</a>
+      <a onclick="showPage('browse','Flowers & Nature')">Flowers &amp; Nature</a>
+      <a onclick="showPage('browse','Holiday & Seasonal')">Holiday &amp; Seasonal</a>
+    </div>
+    <div class="footer-col">
+      <h4>Help</h4>
+      <a>How Downloads Work</a>
+      <a>Supported Formats</a>
+      <a>USB Drive Orders</a>
+      <a>Contact Us</a>
+    </div>
+    <div class="footer-col">
+      <h4>Account</h4>
+      <a onclick="handleAccountNav()">My Account</a>
+      <a onclick="showPage('cart')">My Cart</a>
+      <a onclick="showPage('register')">Create Account</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Stitch &amp; Smile Studio. Made with 💖 for embroidery lovers everywhere.</p>
+    <p style="margin-top:.3rem">All designs are for personal use. Commercial license available on request.</p>
+  </div>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIG — swap in your real Stripe publishable key
+// ═══════════════════════════════════════════════════════
+const STRIPE_PUBLISHABLE_KEY = window.STRIPE_PK || 'pk_test_placeholder';
+let stripeInstance = null;
+let cardElement   = null;
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let authToken    = localStorage.getItem('sas_token') || null;
+let currentUser  = null;
+let cart         = JSON.parse(localStorage.getItem('sas_cart') || '[]');
+let allProducts  = [];
+let allCategories = [];
+let currentFilter = 'all';
+let currentPaymentIntentId = null;
+
+// ═══════════════════════════════════════════════════════
+//  API HELPER
+// ═══════════════════════════════════════════════════════
+async function api(method, path, body, isFormData) {
+  const opts = {
+    method,
+    headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
+  };
+  if (body && !isFormData) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  } else if (isFormData) {
+    opts.body = body; // FormData — no Content-Type header
+  }
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+  return data;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PAGE ROUTING
+// ═══════════════════════════════════════════════════════
+async function showPage(page, arg) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+
+  if (page === 'home')       await renderHome();
+  if (page === 'browse')     { currentFilter = arg || 'all'; await renderBrowse(); }
+  if (page === 'cart')       renderCart();
+  if (page === 'checkout')   await renderCheckout();
+  if (page === 'dashboard')  await renderDashboard();
+  if (page === 'admin')      await renderAdmin();
+}
+
+function handleAccountNav() {
+  currentUser ? showPage('dashboard') : showPage('login');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DATA LOADING
+// ═══════════════════════════════════════════════════════
+async function loadCategories() {
+  if (allCategories.length) return allCategories;
+  allCategories = await api('GET', '/api/categories');
+  return allCategories;
+}
+
+async function loadProducts(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  return api('GET', `/api/products${qs ? '?' + qs : ''}`);
+}
+
+// ═══════════════════════════════════════════════════════
+//  HOME PAGE
+// ═══════════════════════════════════════════════════════
+async function renderHome() {
+  const [cats, featured] = await Promise.all([
+    loadCategories(),
+    loadProducts({ featured: 'true' })
+  ]);
+
+  document.getElementById('home-cats').innerHTML = cats.map(c =>
+    `<div class="cat-card" onclick="showPage('browse','${c.name}')">
+      <span class="cat-icon">${c.icon}</span>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-count">${c.count} design${c.count !== 1 ? 's' : ''}</div>
+    </div>`).join('') || '<p style="color:var(--text-light);padding:1rem">No categories yet!</p>';
+
+  document.getElementById('home-featured').innerHTML =
+    featured.slice(0, 6).map(p => productCardHTML(p)).join('') ||
+    '<p style="color:var(--text-light);padding:1rem;grid-column:1/-1">No featured designs yet!</p>';
+}
+
+// ═══════════════════════════════════════════════════════
+//  BROWSE PAGE
+// ═══════════════════════════════════════════════════════
+async function renderBrowse() {
+  const cats = await loadCategories();
+
+  document.getElementById('sidebar-cats').innerHTML =
+    `<div class="sidebar-cat ${currentFilter === 'all' ? 'active' : ''}" onclick="setFilter('all')"><span>✨</span> All Designs</div>` +
+    cats.map(c =>
+      `<div class="sidebar-cat ${currentFilter === c.name ? 'active' : ''}" onclick="setFilter('${c.name}')">
+        <span>${c.icon}</span> ${c.name}
+      </div>`).join('');
+
+  await filterProducts();
+}
+
+function setFilter(cat) { currentFilter = cat; renderBrowse(); }
+
+async function filterProducts() {
+  const search = document.getElementById('search-input')?.value || '';
+  const sort   = document.getElementById('sort-select')?.value || 'featured';
+
+  const params = {};
+  if (currentFilter !== 'all') params.category = currentFilter;
+  if (search) params.search = search;
+
+  let products = await loadProducts(params);
+
+  if (sort === 'price-low')  products.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-high') products.sort((a,b) => b.price - a.price);
+  else if (sort === 'name')  products.sort((a,b) => a.name.localeCompare(b.name));
+
+  const catObj = allCategories.find(c => c.name === currentFilter);
+  document.getElementById('browse-current-cat').textContent =
+    currentFilter === 'all' ? '✨ All Designs' : `${catObj?.icon || ''} ${currentFilter}`;
+
+  // Update sidebar active state
+  document.querySelectorAll('.sidebar-cat').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.sidebar-cat').forEach(el => {
+    if ((currentFilter === 'all' && el.textContent.includes('All Designs')) ||
+        el.textContent.includes(currentFilter)) el.classList.add('active');
+  });
+
+  document.getElementById('browse-products').innerHTML = products.length
+    ? products.map(p => productCardHTML(p)).join('')
+    : `<div class="empty-state" style="grid-column:1/-1"><span class="icon">🔍</span><h3>No designs found</h3><p>Try a different search or category!</p></div>`;
+}
+
+function productCardHTML(p) {
+  const typeBadge = p.type === 'embroidery' ? '🧵 Embroidery' : p.type === 'vector' ? '🎨 Vector' : '🧵🎨 Both';
+  const badgeClass = p.type === 'vector' ? 'badge-purple' : p.type === 'both' ? 'badge-teal' : 'badge-pink';
+  return `<div class="product-card" onclick="showProduct(${p.id})">
+    <div class="product-img">${p.icon}</div>
+    <div class="product-info">
+      <div class="product-name">${p.name}</div>
+      <div class="product-cat">${p.category_name || ''}</div>
+      <div style="margin:.3rem 0"><span class="badge ${badgeClass}">${typeBadge}</span></div>
+      <div class="product-price">$${p.price.toFixed(2)}</div>
+      <div class="product-formats">${p.formats}</div>
+      <div class="product-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-primary btn-sm" onclick="addToCart(${p.id},'download','${escHtml(p.name)}','${p.icon}',${p.price})">🛒 Add</button>
+        <button class="btn btn-secondary btn-sm" onclick="showProduct(${p.id})">👁️ View</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRODUCT DETAIL
+// ═══════════════════════════════════════════════════════
+async function showProduct(id) {
+  showPage('product');
+  const p = await api('GET', `/api/products/${id}`);
+  document.getElementById('product-detail-content').innerHTML = `
+    <div class="product-detail-img">${p.icon}</div>
+    <div class="product-detail-info">
+      <div style="margin-bottom:.5rem">
+        <span class="badge badge-pink">${p.category_name || ''}</span>
+        <span class="badge badge-${p.type === 'vector' ? 'purple' : 'teal'}" style="margin-left:.3rem">${p.type === 'embroidery' ? '🧵 Embroidery' : p.type === 'vector' ? '🎨 Vector' : '🧵🎨 Both'}</span>
+      </div>
+      <h1>${p.name}</h1>
+      <p style="color:var(--text-light);margin:.5rem 0">${p.description}</p>
+      ${p.hoop_sizes && p.hoop_sizes !== 'N/A' ? `<p style="font-size:.85rem;color:var(--text-light)">📐 Hoop sizes: <strong>${p.hoop_sizes}</strong></p>` : ''}
+      <div class="formats-list" style="margin:.75rem 0">
+        ${p.formats.split(',').map(f => `<span class="chip">${f.trim()}</span>`).join('')}
+      </div>
+      <div class="product-detail-price">$${p.price.toFixed(2)}</div>
+      <div class="divider"></div>
+      <h3 style="color:var(--purple);margin:1rem 0 .5rem;font-size:1.1rem">Choose Delivery Method:</h3>
+      <label class="delivery-option selected" id="opt-download">
+        <input type="radio" name="delivery" value="download" checked onchange="updateDetailTotal(${p.price},${p.ship_cost})">
+        <div><strong>⚡ Instant Download — FREE</strong><span>ZIP file emailed immediately after purchase</span></div>
+      </label>
+      <label class="delivery-option" id="opt-drive">
+        <input type="radio" name="delivery" value="drive" onchange="updateDetailTotal(${p.price},${p.ship_cost})">
+        <div><strong>💾 USB Drive + Printed Preview — +$${p.ship_cost.toFixed(2)}</strong><span>Mailed within 3–5 business days</span></div>
+      </label>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--pink);margin:.75rem 0">
+        Total: $<span id="detail-total">${p.price.toFixed(2)}</span>
+      </div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="addToCartFromDetail(${p.id},'${escHtml(p.name)}','${p.icon}',${p.price},${p.ship_cost})">🛒 Add to Cart</button>
+        <button class="btn btn-teal" onclick="buyNow(${p.id},'${escHtml(p.name)}','${p.icon}',${p.price},${p.ship_cost})">⚡ Buy Now</button>
+      </div>
+    </div>`;
+
+  document.querySelectorAll('.delivery-option').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.delivery-option').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+    });
+  });
+}
+
+function updateDetailTotal(price, shipCost) {
+  const isDrive = document.querySelector('input[name="delivery"]:checked')?.value === 'drive';
+  document.getElementById('detail-total').textContent = (isDrive ? price + shipCost : price).toFixed(2);
+}
+
+function addToCartFromDetail(id, name, icon, price, shipCost) {
+  const delivery = document.querySelector('input[name="delivery"]:checked')?.value || 'download';
+  addToCart(id, delivery, name, icon, delivery === 'drive' ? price + shipCost : price);
+}
+
+function buyNow(id, name, icon, price, shipCost) {
+  addToCartFromDetail(id, name, icon, price, shipCost);
+  showPage('checkout');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CART
+// ═══════════════════════════════════════════════════════
+function addToCart(id, delivery, name, icon, price) {
+  if (cart.find(c => c.id === id && c.delivery === delivery)) {
+    showToast('⚠️ Already in cart!', 'error'); return;
+  }
+  cart.push({ id, name, icon, price, delivery });
+  saveCart();
+  showToast(`🛒 "${name}" added to cart!`, 'success');
+}
+
+function saveCart() {
+  localStorage.setItem('sas_cart', JSON.stringify(cart));
+  document.getElementById('cart-count').textContent = cart.length;
+}
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  const sumEl = document.getElementById('cart-summary-section');
+  if (!cart.length) {
+    el.innerHTML = `<div class="empty-state"><span class="icon">🛒</span><h3>Your cart is empty!</h3><p>Browse our designs and add something you love!</p><br><button class="btn btn-primary" onclick="showPage('browse')">🛍️ Start Shopping</button></div>`;
+    sumEl.innerHTML = ''; return;
+  }
+  el.innerHTML = cart.map((item, i) => `
+    <div class="cart-item">
+      <div class="cart-item-icon">${item.icon}</div>
+      <div class="cart-item-details">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-type">${item.delivery === 'drive' ? '💾 USB Drive + Printed Preview' : '⚡ Instant Download'}</div>
+      </div>
+      <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+      <button class="cart-remove" onclick="removeFromCart(${i})">✕</button>
+    </div>`).join('');
+
+  const total = cart.reduce((s,c) => s + c.price, 0);
+  sumEl.innerHTML = `<div class="cart-summary">
+    <div class="cart-total-row"><span>Subtotal (${cart.length} item${cart.length !== 1 ? 's' : ''})</span><span>$${total.toFixed(2)}</span></div>
+    <div class="cart-total-row big"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+    <button class="btn btn-primary btn-full" style="margin-top:1rem;font-size:1rem;padding:.9rem" onclick="goCheckout()">💳 Proceed to Checkout</button>
+    <button class="btn btn-outline btn-full btn-sm" style="margin-top:.5rem" onclick="showPage('browse')">← Continue Shopping</button>
+  </div>`;
+}
+
+function removeFromCart(i) { cart.splice(i,1); saveCart(); renderCart(); }
+
+function goCheckout() {
+  if (!currentUser) { showToast('Please sign in to checkout!','error'); setTimeout(()=>showPage('login'),700); return; }
+  showPage('checkout');
+}
+
+// ═══════════════════════════════════════════════════════
+//  CHECKOUT + STRIPE
+// ═══════════════════════════════════════════════════════
+async function renderCheckout() {
+  if (!currentUser) { showPage('login'); return; }
+
+  const hasPhysical = cart.some(c => c.delivery === 'drive');
+  document.getElementById('checkout-shipping-section').style.display = hasPhysical ? 'block' : 'none';
+
+  const total = cart.reduce((s,c) => s + c.price, 0);
+  document.getElementById('checkout-order-summary').innerHTML =
+    cart.map(item => `
+      <div class="cart-total-row" style="border-bottom:1px solid var(--border);padding-bottom:.5rem;margin-bottom:.5rem">
+        <span>${item.icon} ${item.name} <small style="color:var(--text-light)">(${item.delivery === 'drive' ? '💾 Drive' : '⚡ Download'})</small></span>
+        <span style="font-weight:700">$${item.price.toFixed(2)}</span>
+      </div>`).join('') +
+    `<div class="cart-total-row big"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+
+  // Mount Stripe Elements
+  if (STRIPE_PUBLISHABLE_KEY !== 'pk_test_placeholder') {
+    if (!stripeInstance) stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+    const elements = stripeInstance.elements();
+    cardElement = elements.create('card', {
+      style: { base: { fontFamily: 'Poppins, sans-serif', fontSize: '16px', color: '#2D2D2D' } }
+    });
+    cardElement.mount('#stripe-card-element');
+    cardElement.on('change', e => {
+      document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+    });
+  } else {
+    document.getElementById('stripe-card-element').innerHTML =
+      `<div style="background:#FFF5CC;border:2px dashed #997A00;border-radius:10px;padding:1.5rem;text-align:center;color:#997A00">
+        ⚠️ <strong>Demo Mode</strong><br><small>Add your Stripe publishable key to enable real payments</small>
+      </div>`;
+  }
+}
+
+async function completePurchase() {
+  if (!currentUser) { showPage('login'); return; }
+  if (!cart.length) { showToast('Cart is empty!','error'); return; }
+
+  const btn = document.getElementById('pay-btn');
+  const errEl = document.getElementById('checkout-error');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Processing...';
+  errEl.style.display = 'none';
+
+  try {
+    // Create payment intent on server
+    const intentRes = await api('POST', '/api/checkout/create-intent', {
+      items: cart.map(c => ({ productId: c.id, deliveryType: c.delivery }))
+    });
+
+    if (STRIPE_PUBLISHABLE_KEY !== 'pk_test_placeholder' && cardElement) {
+      // Confirm payment with Stripe
+      const { paymentIntent, error } = await stripeInstance.confirmCardPayment(intentRes.clientSecret, {
+        payment_method: { card: cardElement }
+      });
+
+      if (error) {
+        errEl.textContent = '❌ ' + error.message;
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = '🎉 Complete Purchase';
+        return;
+      }
+
+      // Tell server to finalize the order
+      const shippingAddress = cart.some(c => c.delivery === 'drive') ? {
+        firstName: document.getElementById('ship-first')?.value,
+        lastName:  document.getElementById('ship-last')?.value,
+        address:   document.getElementById('ship-addr')?.value,
+        city:      document.getElementById('ship-city')?.value,
+        state:     document.getElementById('ship-state')?.value,
+        zip:       document.getElementById('ship-zip')?.value,
+        country:   document.getElementById('ship-country')?.value,
+      } : null;
+
+      await api('POST', '/api/checkout/confirm', {
+        paymentIntentId: paymentIntent.id,
+        shippingAddress,
+        items: cart.map(c => ({ productId: c.id, deliveryType: c.delivery }))
+      });
+
+    } else {
+      // Demo mode — skip real Stripe
+      console.log('Demo mode: skipping real Stripe confirmation');
+    }
+
+    document.getElementById('confirm-email').textContent = currentUser.email;
+    cart = []; saveCart();
+    showPage('confirmation');
+    showToast('🎉 Order placed! Check your email!','success');
+  } catch (err) {
+    errEl.textContent = '❌ ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🎉 Complete Purchase';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════
+async function doRegister() {
+  const errEl = document.getElementById('reg-error');
+  const btn   = document.getElementById('reg-btn');
+  errEl.style.display = 'none';
+
+  const firstName  = document.getElementById('reg-firstname').value.trim();
+  const lastName   = document.getElementById('reg-lastname').value.trim();
+  const email      = document.getElementById('reg-email').value.trim();
+  const phone      = document.getElementById('reg-phone').value.trim();
+  const password   = document.getElementById('reg-password').value;
+  const confirm    = document.getElementById('reg-confirm').value;
+  const newsletter = document.getElementById('reg-newsletter').checked;
+
+  if (password !== confirm) { showErr(errEl, 'Passwords do not match.'); return; }
+
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Creating account...';
+  try {
+    const data = await api('POST', '/api/auth/register', { firstName, lastName, email, password, phone, newsletter });
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('sas_token', authToken);
+    updateNavForUser();
+    showToast(`🎀 Welcome, ${firstName}!`, 'success');
+    showPage('dashboard');
+  } catch (err) {
+    showErr(errEl, err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '🎀 Create My Account';
+  }
+}
+
+async function doLogin() {
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Signing in...';
+  try {
+    const data = await api('POST', '/api/auth/login', {
+      email:    document.getElementById('login-email').value.trim(),
+      password: document.getElementById('login-password').value
+    });
+    authToken = data.token; currentUser = data.user;
+    localStorage.setItem('sas_token', authToken);
+    updateNavForUser();
+    showToast(`👋 Welcome back, ${data.user.first_name}!`, 'success');
+    showPage('dashboard');
+  } catch (err) {
+    showErr(errEl, err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '🔑 Sign In';
+  }
+}
+
+function doLogout() {
+  authToken = null; currentUser = null;
+  localStorage.removeItem('sas_token');
+  updateNavForUser();
+  showToast('👋 Signed out — see you soon!', 'success');
+  showPage('home');
+}
+
+function updateNavForUser() {
+  const btn = document.getElementById('nav-account-btn');
+  const adminBtn = document.getElementById('nav-admin-btn');
+  if (currentUser) {
+    btn.textContent = `👤 ${currentUser.first_name}`;
+    adminBtn.style.display = currentUser.is_admin ? 'inline-block' : 'none';
+  } else {
+    btn.textContent = '👤 Account';
+    adminBtn.style.display = 'none';
+  }
+}
+
+function checkPasswordReqs() {
+  const pw = document.getElementById('reg-password').value;
+  const set = (id, met, label) => {
+    const el = document.getElementById(id);
+    el.className = 'req-item ' + (met ? 'met' : 'unmet');
+    el.textContent = (met ? '✅' : '⬜') + ' ' + label;
+  };
+  set('req-length',  pw.length >= 8,                              'At least 8 characters');
+  set('req-upper',   /[A-Z]/.test(pw),                            'One uppercase letter (A–Z)');
+  set('req-lower',   /[a-z]/.test(pw),                            'One lowercase letter (a–z)');
+  set('req-number',  /[0-9]/.test(pw),                            'One number (0–9)');
+  set('req-special', /[!@#$%^&*()\-_=+[\]{};:'",.<>?/\\|`~]/.test(pw), 'One special character (!@#$%^&* etc.)');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════
+async function renderDashboard() {
+  if (!currentUser) { showPage('login'); return; }
+  document.getElementById('dash-greeting').textContent = `👋 Hello, ${currentUser.first_name}!`;
+  document.getElementById('dash-email').textContent    = currentUser.email;
+  document.getElementById('profile-first').value = currentUser.first_name;
+  document.getElementById('profile-last').value  = currentUser.last_name;
+  document.getElementById('profile-email').value = currentUser.email;
+  document.getElementById('profile-phone').value = currentUser.phone || '';
+  await renderOrders();
+}
+
+async function renderOrders() {
+  const el = document.getElementById('orders-list');
+  try {
+    const orders = await api('GET', '/api/orders');
+    if (!orders.length) {
+      el.innerHTML = `<div class="empty-state"><span class="icon">📦</span><h3>No orders yet!</h3><p>Your purchases will appear here.</p><br><button class="btn btn-primary" onclick="showPage('browse')">🛍️ Start Shopping!</button></div>`;
+      return;
+    }
+    el.innerHTML = orders.flatMap(order => order.items.map(item => `
+      <div class="order-card">
+        <div class="order-icon">${item.icon}</div>
+        <div class="order-info">
+          <div class="order-name">${item.name}</div>
+          <div class="order-date">Order #${order.id} · ${new Date(order.created_at).toLocaleDateString()} · ${item.delivery_type === 'drive' ? '💾 USB Drive' : '⚡ Download'}</div>
+        </div>
+        <span class="badge ${order.status === 'completed' ? 'badge-teal' : 'badge-yellow'}">${order.status === 'completed' ? 'Delivered' : 'Processing'}</span>
+        ${item.delivery_type === 'download'
+          ? `<a class="download-btn" href="/api/orders/${order.id}/download/${item.id}" target="_blank">⬇️ Download</a>`
+          : ''}
+        <strong style="color:var(--pink)">$${item.price.toFixed(2)}</strong>
+      </div>`)).join('');
+  } catch (err) {
+    el.innerHTML = `<p style="color:#cc0000">Could not load orders: ${err.message}</p>`;
+  }
+}
+
+async function saveProfile() {
+  try {
+    const data = await api('PUT', '/api/auth/profile', {
+      firstName: document.getElementById('profile-first').value,
+      lastName:  document.getElementById('profile-last').value,
+      phone:     document.getElementById('profile-phone').value
+    });
+    currentUser = data.user;
+    updateNavForUser();
+    showToast('💾 Profile saved!', 'success');
+  } catch (err) {
+    showToast('❌ ' + err.message, 'error');
+  }
+}
+
+function switchDashTab(tab, btn) {
+  document.querySelectorAll('.dash-tab').forEach(t => t.style.display = 'none');
+  document.getElementById('dash-' + tab).style.display = 'block';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (tab === 'orders') renderOrders();
+}
+
+// ═══════════════════════════════════════════════════════
+//  ADMIN
+// ═══════════════════════════════════════════════════════
+async function renderAdmin() {
+  if (!currentUser?.is_admin) { showPage('home'); return; }
+  const [cats, prods] = await Promise.all([
+    api('GET', '/api/categories'),
+    api('GET', '/api/products')
+  ]);
+
+  // Categories
+  document.getElementById('admin-cat-list').innerHTML = cats.map(c =>
+    `<li><span>${c.icon} ${c.name} <small style="color:var(--text-light)">(${c.count} designs)</small></span>
+     <button class="icon-btn" onclick="adminDeleteCategory(${c.id})" title="Delete">🗑️</button></li>`
+  ).join('');
+
+  // Products
+  document.getElementById('admin-prod-count').textContent = prods.length;
+  document.getElementById('admin-prod-list').innerHTML = prods.map(p =>
+    `<li>
+      <span>${p.icon} <strong>${p.name}</strong> — ${p.category_name || 'Uncategorized'} — $${p.price.toFixed(2)} ${p.file_path ? '📎' : '⚠️ no file'}</span>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <label style="font-size:.75rem;cursor:pointer;background:var(--teal-light);color:#007A65;padding:.2rem .6rem;border-radius:50px;font-weight:600">
+          📁 Upload File
+          <input type="file" style="display:none" onchange="adminUploadFile(${p.id},this)">
+        </label>
+        <button class="icon-btn" onclick="adminDeleteProduct(${p.id})" title="Delete">🗑️</button>
+      </div>
+    </li>`
+  ).join('');
+
+  // Category select for add product form
+  document.getElementById('ap-cat').innerHTML =
+    cats.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+}
+
+async function adminAddCategory() {
+  const name = document.getElementById('new-cat-name').value.trim();
+  const icon = document.getElementById('new-cat-icon').value.trim() || '📁';
+  if (!name) { showToast('Enter a category name!','error'); return; }
+  try {
+    await api('POST', '/api/admin/categories', { name, icon });
+    allCategories = []; // clear cache
+    document.getElementById('new-cat-name').value = '';
+    document.getElementById('new-cat-icon').value = '';
+    await renderAdmin();
+    showToast(`✅ "${name}" added!`, 'success');
+  } catch (err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+async function adminDeleteCategory(id) {
+  try {
+    await api('DELETE', `/api/admin/categories/${id}`);
+    allCategories = [];
+    await renderAdmin();
+    showToast('🗑️ Category deleted.', 'success');
+  } catch (err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+async function adminAddProduct() {
+  const btn = document.getElementById('add-prod-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Adding...';
+  try {
+    const formData = new FormData();
+    formData.append('name',       document.getElementById('ap-name').value.trim());
+    formData.append('categoryId', document.getElementById('ap-cat').value);
+    formData.append('price',      document.getElementById('ap-price').value);
+    formData.append('icon',       document.getElementById('ap-icon').value.trim() || '🧵');
+    formData.append('formats',    document.getElementById('ap-formats').value.trim() || 'PES, DST');
+    formData.append('hoopSizes',  document.getElementById('ap-hoop').value.trim());
+    formData.append('description',document.getElementById('ap-desc').value.trim());
+    formData.append('shipCost',   document.getElementById('ap-ship').value || '4.99');
+    formData.append('type',       document.getElementById('ap-type').value);
+    formData.append('featured',   document.getElementById('ap-featured').value);
+
+    const fileInput = document.getElementById('ap-file');
+    if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+
+    await api('POST', '/api/admin/products', formData, true);
+    // Clear form
+    ['ap-name','ap-price','ap-icon','ap-formats','ap-hoop','ap-desc'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ap-ship').value = '4.99';
+    document.getElementById('ap-file').value = '';
+    await renderAdmin();
+    showToast('✅ Design added to the shop!', 'success');
+  } catch (err) { showToast('❌ ' + err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '✨ Add Design to Shop'; }
+}
+
+async function adminUploadFile(productId, input) {
+  if (!input.files[0]) return;
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  try {
+    await api('POST', `/api/admin/products/${productId}/file`, formData, true);
+    showToast('📎 File uploaded!', 'success');
+    await renderAdmin();
+  } catch (err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+async function adminDeleteProduct(id) {
+  if (!confirm('Delete this design? This cannot be undone.')) return;
+  try {
+    await api('DELETE', `/api/admin/products/${id}`);
+    await renderAdmin();
+    showToast('🗑️ Design removed.', 'success');
+  } catch (err) { showToast('❌ ' + err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + type + ' show';
+  setTimeout(() => { t.className = 'toast ' + type; }, 3500);
+}
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+function escHtml(s) { return s.replace(/'/g,"&#39;").replace(/"/g,'&quot;'); }
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+async function init() {
+  // Restore session
+  if (authToken) {
+    try {
+      const data = await api('GET', '/api/auth/me');
+      currentUser = data.user;
+    } catch {
+      authToken = null;
+      localStorage.removeItem('sas_token');
+    }
+  }
+  updateNavForUser();
+  document.getElementById('cart-count').textContent = cart.length;
+  await renderHome();
+}
+
+init();
+</script>
+</body>
+</html>
