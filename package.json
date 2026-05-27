@@ -1,3 +1,4 @@
+
 {
   "name": "stitch-and-smile-studio",
   "version": "1.0.0",
@@ -23,6 +24,6 @@
     "nodemon": "^3.1.0"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   }
 }
