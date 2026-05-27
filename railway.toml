@@ -1,9 +1,5 @@
-Railway · TOML
 [build]
 builder = "nixpacks"
- 
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
  
 [deploy]
 startCommand = "node server.js"
